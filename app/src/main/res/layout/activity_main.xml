@@ -26,6 +26,7 @@
             android:textSize="20sp" />
 
         <EditText
+            android:id="@+id/timerEditText"
             android:layout_width="0sp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -176,5 +177,6 @@
             android:layout_height="wrap_content"
             android:layout_weight="1" />
     </LinearLayout>
+
 
 </RelativeLayout>
