@@ -26,7 +26,6 @@ import java.util.List;
  */
 
 public class ServiceHandler extends Service implements AudioManager.OnAudioFocusChangeListener {
-    public static final int REQUEST_ENABLE = 100;
 
     @Override
     public void onDestroy() {
@@ -35,7 +34,7 @@ public class ServiceHandler extends Service implements AudioManager.OnAudioFocus
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i("SERVICE CLASS mData***", intent.getStringExtra("mdata"));
+
         String wifi = intent.getStringExtra("wifi");
         String bluetooth = intent.getStringExtra("bluetooth");
         String tkill = intent.getStringExtra("taskkill");
@@ -61,25 +60,6 @@ public class ServiceHandler extends Service implements AudioManager.OnAudioFocus
             putPhoneOnSilent();
             Log.i("***", "Silent Phone Notification level 3 ended");
         }
-
-       /* DevicePolicyManager mDPM = (DevicePolicyManager)getSystemService(Context.DEVICE_POLICY_SERVICE);
-        KeyguardManager myKM = (KeyguardManager)getSystemService(Context.KEYGUARD_SERVICE);*/
-        /*if(lock.equals("yes") *//*&& myKM!=null  && mDPM!=null*//* && !myKM.inKeyguardRestrictedInputMode()) {
-           // ComponentName mAdminName = new ComponentName(this, LockAdminReq.class);
-            if (!mDPM.isAdminActive(mAdminName)) {
-                // try to become active – must happen here in this activity, to get result
-                Intent intent1 = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
-                intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN,mAdminName);
-                intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,"Please make admin");
-                startActivityForResult(intent,REQUEST_ENABLE);
-
-            } else {
-// Already is a device administrator, can do security operations now.
-                mDPM.lockNow();
-            }
-
-        }*/
-
 
         if (tkill.equals("yes")) {
             Log.i("***", "Kill Task Started");
@@ -176,10 +156,7 @@ public class ServiceHandler extends Service implements AudioManager.OnAudioFocus
             currentApp = tasks.get(0).processName;
             Log.e("TODO adapter***", "INCOMPLETE CODE foreground is: " + currentApp);
         }
-
-
     }
-
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -203,6 +180,4 @@ public class ServiceHandler extends Service implements AudioManager.OnAudioFocus
         }
         return appInfos;
     }
-
-
 }

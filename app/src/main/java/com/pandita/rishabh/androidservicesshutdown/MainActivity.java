@@ -21,40 +21,17 @@ import android.widget.Toast;
 
 
 public class MainActivity extends AppCompatActivity {
-    private static final int REQUEST_READ_PHONE_STATE = 100;
-    //public static MainActivity instance;
     public static Activity contextActivity;
     public boolean start = true;
     public String[] services = new String[7];
-/*    DevicePolicyManager mDPM =null;
-    KeyguardManager myKM = null;*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-   /*     mDPM = (DevicePolicyManager)getSystemService(Context.DEVICE_POLICY_SERVICE);
-        myKM = (KeyguardManager)getSystemService(Context.KEYGUARD_SERVICE);
-        ComponentName mAdminName = new ComponentName(this, LockAdminReq.class);
-        if (!mDPM.isAdminActive(mAdminName)) {
-            // try to become active – must happen here in this activity, to get result
-            Intent intent1 = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
-            intent1.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN,mAdminName);
-            intent1.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,"Please make admin");
-            startActivityForResult(intent1,REQUEST_ENABLE);
-            mDPM.lockNow();
-            Log.i("***","lock worked");
-        } else {
-            // Already is a device administrator, can do security operations now.
-            mDPM.lockNow();
-            Log.i("***","lock worked");
-        }*/
-
-
         Switch wifisw = (Switch) findViewById(R.id.wifiSwitch);
         Switch bluetoothsw = (Switch) findViewById(R.id.bluetoothSwitch);
-        Switch mobileDatasw = (Switch) findViewById(R.id.mobileDataSwitch);
         Switch killsw = (Switch) findViewById(R.id.killBackTaskSwitch);
         final Switch silentPhn = (Switch) findViewById(R.id.silentRingSwitch);
         Switch lockScreen = (Switch) findViewById(R.id.screenLockSwitch);
@@ -93,23 +70,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
         services[2] = "no";
-        mobileDatasw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                if (!isChecked) {
-                    services[2] = "no";
-                    Toast.makeText(getApplicationContext(), "Mobile Data unselected", Toast.LENGTH_SHORT).show();
-                } else {
-                    services[2] = "yes";
-                    Toast.makeText(getApplicationContext(), "Mobile Data selected", Toast.LENGTH_SHORT).show();
-
-                }
-            }
-        });
-
         services[3] = "no";
         killsw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -204,6 +165,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+
     private boolean doNotDisturnSettingAccess() {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -253,7 +215,6 @@ public class MainActivity extends AppCompatActivity {
                         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                             Switch wifisw = (Switch) findViewById(R.id.wifiSwitch);
                             Switch bluetoothsw = (Switch) findViewById(R.id.bluetoothSwitch);
-                            Switch mobileDatasw = (Switch) findViewById(R.id.mobileDataSwitch);
                             Switch killsw = (Switch) findViewById(R.id.killBackTaskSwitch);
                             Switch silentPhn = (Switch) findViewById(R.id.silentRingSwitch);
                             Switch lockScreen = (Switch) findViewById(R.id.screenLockSwitch);
@@ -267,8 +228,6 @@ public class MainActivity extends AppCompatActivity {
                                 silentPhn.setChecked(false);
                                 killsw.setClickable(false);
                                 killsw.setChecked(false);
-                                mobileDatasw.setClickable(false);
-                                mobileDatasw.setChecked(false);
                                 bluetoothsw.setClickable(false);
                                 bluetoothsw.setChecked(false);
                                 wifisw.setClickable(false);
@@ -281,7 +240,6 @@ public class MainActivity extends AppCompatActivity {
                                 lockScreen.setClickable(true);
                                 silentPhn.setClickable(true);
                                 killsw.setClickable(true);
-                                mobileDatasw.setClickable(true);
                                 bluetoothsw.setClickable(true);
                                 wifisw.setClickable(true);
                                 timerText.setEnabled(true);
@@ -294,16 +252,4 @@ public class MainActivity extends AppCompatActivity {
         }
         return true;
     }
-   /* public class LockAdminReq extends DeviceAdminReceiver {
-        @Override
-        public void onEnabled(Context context, Intent intent) {
-            super.onEnabled(context, intent);
-        }
-
-        @Override
-        public void onDisabled(Context context, Intent intent) {
-            super.onDisabled(context, intent);
-        }
-    }
-*/
 }
