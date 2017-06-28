@@ -26,6 +26,7 @@ public class UtilAlarmActivity extends BroadcastReceiver {
         i.putExtra("taskkill", intent.getStringExtra("taskkill"));
         i.putExtra("silentphn", intent.getStringExtra("silentphn"));
         i.putExtra("lockscreen", intent.getStringExtra("lockscreen"));
+        i.putExtra("killmusic",intent.getStringExtra("killmusic"));
         context.startService(i);
 
     }
@@ -45,6 +46,7 @@ public class UtilAlarmActivity extends BroadcastReceiver {
         i.putExtra("taskkill", services[3]);
         i.putExtra("silentphn", services[4]);
         i.putExtra("lockscreen", services[5]);
+        i.putExtra("killmusic", services[6]);
         PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
         am.set(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), pi);
     }

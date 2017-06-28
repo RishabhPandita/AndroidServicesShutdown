@@ -1,6 +1,10 @@
 package com.pandita.rishabh.androidservicesshutdown;
 
 import android.app.Activity;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -21,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
     //public static MainActivity instance;
     public static Activity contextActivity;
     public boolean start = true;
-    public String[] services = new String[6];
+    public String[] services = new String[7];
 /*    DevicePolicyManager mDPM =null;
     KeyguardManager myKM = null;*/
 
@@ -52,8 +56,9 @@ public class MainActivity extends AppCompatActivity {
         Switch bluetoothsw = (Switch) findViewById(R.id.bluetoothSwitch);
         Switch mobileDatasw = (Switch) findViewById(R.id.mobileDataSwitch);
         Switch killsw = (Switch) findViewById(R.id.killBackTaskSwitch);
-        Switch silentPhn = (Switch) findViewById(R.id.silentRingSwitch);
+        final Switch silentPhn = (Switch) findViewById(R.id.silentRingSwitch);
         Switch lockScreen = (Switch) findViewById(R.id.screenLockSwitch);
+        Switch killMusic = (Switch) findViewById(R.id.killMusicSwitch);
         final EditText timerText = (EditText) findViewById(R.id.timerEditText);
         final Button startbutton = (Button) findViewById(R.id.startStopButton);
 
@@ -124,14 +129,16 @@ public class MainActivity extends AppCompatActivity {
         silentPhn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
                 if (!isChecked) {
                     services[4] = "no";
-                    Toast.makeText(getApplicationContext(), "Silent Phone unselected", Toast.LENGTH_SHORT).show();
                 } else {
-                    services[4] = "yes";
-                    Toast.makeText(getApplicationContext(), "Silent Phone selected", Toast.LENGTH_SHORT).show();
-
+                    if (doNotDisturnSettingAccess()) {
+                        services[4] = "yes";
+                        Toast.makeText(getApplicationContext(), "Mutes all notification sounds except one marked alarm", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(getApplicationContext(), "This functionality needs Do Not Disturb permission to work", Toast.LENGTH_LONG).show();
+                        silentPhn.setChecked(false);
+                    }
                 }
             }
         });
@@ -147,6 +154,21 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     services[5] = "yes";
                     Toast.makeText(getApplicationContext(), "Lock Screen selected", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        services[6] = "no";
+        killMusic.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                if (!isChecked) {
+                    services[6] = "no";
+                    Toast.makeText(getApplicationContext(), "Kill Music unselected", Toast.LENGTH_SHORT).show();
+                } else {
+                    services[6] = "yes";
+                    Toast.makeText(getApplicationContext(), "Kill Music selected", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -180,6 +202,25 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    private boolean doNotDisturnSettingAccess() {
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                && !notificationManager.isNotificationPolicyAccessGranted()) {
+
+            Intent intent = new Intent(
+                    android.provider.Settings
+                            .ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+
+            startActivity(intent);
+            return notificationManager.isNotificationPolicyAccessGranted();
+        } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            Toast.makeText(getApplicationContext(), "Since Android is below MarshMellow No Setting required", Toast.LENGTH_SHORT).show();
+        }
+        return true;
     }
 
 

@@ -1,6 +1,7 @@
 package com.pandita.rishabh.androidservicesshutdown;
 
 import android.app.ActivityManager;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
@@ -12,6 +13,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.media.AudioManager;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -38,17 +40,27 @@ public class ServiceHandler extends Service implements AudioManager.OnAudioFocus
         String bluetooth = intent.getStringExtra("bluetooth");
         String tkill = intent.getStringExtra("taskkill");
         String lock = intent.getStringExtra("lockscreen");
+        String music = intent.getStringExtra("killmusic");
+        String silent = intent.getStringExtra("silentphn");
 
-        WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
-        if (wifi.equals("yes") && wifiManager != null && wifiManager.isWifiEnabled()) {
-            wifiManager.setWifiEnabled(false);
+        if (wifi.equals("yes")) {
+            WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
+            if (wifiManager != null && wifiManager.isWifiEnabled())
+                wifiManager.setWifiEnabled(false);
         }
 
-        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (bluetooth.equals("yes") && mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()) {
-            mBluetoothAdapter.disable();
+
+        if (bluetooth.equals("yes")) {
+            BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled())
+                mBluetoothAdapter.disable();
         }
 
+        if (silent.equals("yes")) {
+            Log.i("***", "Silent Phone Notification level 3 Started");
+            putPhoneOnSilent();
+            Log.i("***", "Silent Phone Notification level 3 ended");
+        }
 
        /* DevicePolicyManager mDPM = (DevicePolicyManager)getSystemService(Context.DEVICE_POLICY_SERVICE);
         KeyguardManager myKM = (KeyguardManager)getSystemService(Context.KEYGUARD_SERVICE);*/
@@ -70,9 +82,17 @@ public class ServiceHandler extends Service implements AudioManager.OnAudioFocus
 
 
         if (tkill.equals("yes")) {
+            Log.i("***", "Kill Task Started");
             List<String> appInfos = getListOfLaunchableApps();
             killActiveAppsOnly(appInfos);
             killMusic();
+            Log.i("***", "Kill Task Ended");
+        }
+
+        if (music.equals("yes")) {
+            Log.i("***", "Kill Music Started");
+            killMusic();
+            Log.i("***", "Kill Music ended");
         }
 
         Log.i("***", "KILLING MAIN ACTIVITY SERVICE");
@@ -80,12 +100,44 @@ public class ServiceHandler extends Service implements AudioManager.OnAudioFocus
         return super.onStartCommand(intent, flags, startId);
     }
 
+    private void putPhoneOnSilent() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            NotificationManager notificationManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (notificationManager != null && notificationManager.isNotificationPolicyAccessGranted()) {
+                int current_setting = notificationManager.getCurrentInterruptionFilter();
+                Log.i("***", "Current Notification setting:" + current_setting);
+                notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS);
+                current_setting = notificationManager.getCurrentInterruptionFilter();
+                Log.i("***", "After Modification Notification setting:" + current_setting);
+
+            } else if (notificationManager != null && !notificationManager.isNotificationPolicyAccessGranted()) {
+                Log.i("***", "Silent function wont work because permission not granted");
+            } else if (notificationManager == null) {
+                Log.i("***", "Notification Manager Object not found");
+            }
+        } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            Log.i("***", "Audio Manager for <Marshmellow not tested");
+            AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            if (am != null)
+                am.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+            else
+                Log.i("***", "Audio Manager Object not found");
+        }
+    }
+
     private void killMusic() {
         AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        int result = am.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            am.abandonAudioFocus(this);
-        }
+        if (am != null) {
+            int result = am.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+            if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                Log.i("***", "Audio Manager Access granted");
+                am.abandonAudioFocus(this);
+            } else {
+                Log.i("***", "Audio Manager Access not granted");
+            }
+        } else
+            Log.i("***", "Audio Manager Object not found");
     }
 
     @Override
