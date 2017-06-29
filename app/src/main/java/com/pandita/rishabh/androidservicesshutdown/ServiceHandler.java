@@ -3,9 +3,11 @@ package com.pandita.rishabh.androidservicesshutdown;
 import android.app.ActivityManager;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.app.admin.DevicePolicyManager;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.bluetooth.BluetoothAdapter;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -35,33 +37,29 @@ public class ServiceHandler extends Service implements AudioManager.OnAudioFocus
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        String wifi = intent.getStringExtra("wifi");
-        String bluetooth = intent.getStringExtra("bluetooth");
-        String tkill = intent.getStringExtra("taskkill");
-        String lock = intent.getStringExtra("lockscreen");
-        String music = intent.getStringExtra("killmusic");
-        String silent = intent.getStringExtra("silentphn");
+        Boolean wifiReq = intent.getExtras().getBoolean("wifiReq");
+        Boolean bluetoothReq = intent.getExtras().getBoolean("bluetoothReq");
+        Boolean taskKillReq = intent.getExtras().getBoolean("taskKillReq");
+        Boolean silentPhnReq = intent.getExtras().getBoolean("silentPhnReq");
+        Boolean lockScreenReq = intent.getExtras().getBoolean("lockScreenReq");
+        Boolean killMusicReq = intent.getExtras().getBoolean("killMusicReq");
 
-        if (wifi.equals("yes")) {
+
+        if (wifiReq) {
             WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
             if (wifiManager != null && wifiManager.isWifiEnabled())
                 wifiManager.setWifiEnabled(false);
+            Log.i("***", "Wifi Disabled");
         }
 
-
-        if (bluetooth.equals("yes")) {
+        if (bluetoothReq) {
             BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
             if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled())
                 mBluetoothAdapter.disable();
+            Log.i("***", "Bluetooth Disabled");
         }
 
-        if (silent.equals("yes")) {
-            Log.i("***", "Silent Phone Notification level 3 Started");
-            putPhoneOnSilent();
-            Log.i("***", "Silent Phone Notification level 3 ended");
-        }
-
-        if (tkill.equals("yes")) {
+        if (taskKillReq) {
             Log.i("***", "Kill Task Started");
             List<String> appInfos = getListOfLaunchableApps();
             killActiveAppsOnly(appInfos);
@@ -69,13 +67,31 @@ public class ServiceHandler extends Service implements AudioManager.OnAudioFocus
             Log.i("***", "Kill Task Ended");
         }
 
-        if (music.equals("yes")) {
+        if (silentPhnReq) {
+            Log.i("***", "Silent Phone Notification level 3 Started");
+            putPhoneOnSilent();
+            Log.i("***", "Silent Phone Notification level 3 ended");
+        }
+
+        if (lockScreenReq) {
+            DevicePolicyManager deviceManger = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+            ComponentName compName = new ComponentName(this, MyAdmin.class);
+            boolean active = deviceManger.isAdminActive(compName);
+            if (active) {
+                Log.i("***", "Device has become admin");
+                deviceManger.lockNow();
+            } else {
+                Log.i("***", "Device is not admin");
+            }
+        }
+
+        if (killMusicReq) {
             Log.i("***", "Kill Music Started");
             killMusic();
             Log.i("***", "Kill Music ended");
         }
 
-        Log.i("***", "KILLING MAIN ACTIVITY SERVICE");
+        Log.i("***", "KILLING SERVICE");
         stopService(new Intent(this, ServiceHandler.class));
         return super.onStartCommand(intent, flags, startId);
     }
@@ -143,8 +159,7 @@ public class ServiceHandler extends Service implements AudioManager.OnAudioFocus
 
                 for (UsageStats usageStats : appList) {
                     if (appInfos.contains(usageStats.getPackageName())) {
-                        Log.i("RUNNING APPS ***", "" + usageStats.getPackageName() + "=" + usm.isAppInactive(usageStats.getPackageName()));
-
+                        Log.i("***", "" + "RUNNING "+usageStats.getPackageName() + "=" + usm.isAppInactive(usageStats.getPackageName()));
                         ActivityManager am = (ActivityManager) this.getSystemService(Context.ACTIVITY_SERVICE);
                         am.killBackgroundProcesses(usageStats.getPackageName());
                     }
@@ -157,6 +172,7 @@ public class ServiceHandler extends Service implements AudioManager.OnAudioFocus
             Log.e("TODO adapter***", "INCOMPLETE CODE foreground is: " + currentApp);
         }
     }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {

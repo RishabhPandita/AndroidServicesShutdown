@@ -1,15 +1,22 @@
 package com.pandita.rishabh.androidservicesshutdown;
 
 import android.app.Activity;
+import android.app.AppOpsManager;
 import android.app.NotificationManager;
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SwitchCompat;
 import android.text.Editable;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,120 +24,121 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
 public class MainActivity extends AppCompatActivity {
     public static Activity contextActivity;
     public boolean start = true;
-    public String[] services = new String[7];
+    public boolean[] servicesReq = new boolean[6];
+    static final int RESULT_ENABLE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        Switch wifisw = (Switch) findViewById(R.id.wifiSwitch);
-        Switch bluetoothsw = (Switch) findViewById(R.id.bluetoothSwitch);
-        Switch killsw = (Switch) findViewById(R.id.killBackTaskSwitch);
+        Toast.makeText(getApplicationContext(), "Welcome,Luke !!!", Toast.LENGTH_LONG).show();
+        final Switch wifisw = (Switch) findViewById(R.id.wifiSwitch);
+        final Switch bluetoothsw = (Switch) findViewById(R.id.bluetoothSwitch);
+        final Switch killsw = (Switch) findViewById(R.id.killBackTaskSwitch);
         final Switch silentPhn = (Switch) findViewById(R.id.silentRingSwitch);
-        Switch lockScreen = (Switch) findViewById(R.id.screenLockSwitch);
-        Switch killMusic = (Switch) findViewById(R.id.killMusicSwitch);
+        final Switch lockScreen = (Switch) findViewById(R.id.screenLockSwitch);
+        final Switch killMusic = (Switch) findViewById(R.id.killMusicSwitch);
         final EditText timerText = (EditText) findViewById(R.id.timerEditText);
         final Button startbutton = (Button) findViewById(R.id.startStopButton);
 
-        services[0] = "no";
+        servicesReq[0] = false;
         wifisw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (!isChecked)
+                    servicesReq[0] = false;
+                else
+                    servicesReq[0] = true;
 
-                if (!isChecked) {
-                    Toast.makeText(getApplicationContext(), "Wifi unselected", Toast.LENGTH_SHORT).show();
-                    services[0] = "no";
-                } else {
-                    Toast.makeText(getApplicationContext(), "Wifi selected", Toast.LENGTH_SHORT).show();
-                    services[0] = "yes";
-
-                }
             }
         });
 
-        services[1] = "no";
+        servicesReq[1] = false;
         bluetoothsw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                if (!isChecked) {
-                    services[1] = "no";
-                    Toast.makeText(getApplicationContext(), "Bluetoth unselected", Toast.LENGTH_SHORT).show();
-                } else {
-                    services[1] = "yes";
-                    Toast.makeText(getApplicationContext(), "Bluetooth selected", Toast.LENGTH_SHORT).show();
-
-                }
+                if (!isChecked)
+                    servicesReq[1] = false;
+                else
+                    servicesReq[1] = true;
             }
         });
-        services[2] = "no";
-        services[3] = "no";
+
+        servicesReq[2] = false;
         killsw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
                 if (!isChecked) {
-                    services[3] = "no";
-                    Toast.makeText(getApplicationContext(), "Dont Kill ALL Task", Toast.LENGTH_SHORT).show();
-                } else {
-                    services[3] = "yes";
-                    Toast.makeText(getApplicationContext(), "Kill All Task", Toast.LENGTH_SHORT).show();
+                    servicesReq[2] = false;
                 }
+                else {
+                    if(isAppusgae())
+                        servicesReq[2] = true;
+                    else{
+                        killsw.setChecked(false);
+                        Toast.makeText(getApplicationContext(), "Please Enable App Usage", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "In order to kill background applications please turn App Usage on for Android Services Shutdown", Toast.LENGTH_LONG).show();
+                        openAppUsageSettings();
+                    }
+                }
+
             }
         });
 
-        services[4] = "no";
+        servicesReq[3] = false;
         silentPhn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (!isChecked) {
-                    services[4] = "no";
+                    servicesReq[3] = false;
                 } else {
                     if (doNotDisturnSettingAccess()) {
-                        services[4] = "yes";
-                        Toast.makeText(getApplicationContext(), "Mutes all notification sounds except one marked alarm", Toast.LENGTH_LONG).show();
+                        servicesReq[3] = true;
+                        Toast.makeText(getApplicationContext(), "Mutes all notification sounds except one marked alarm, Luke.", Toast.LENGTH_LONG).show();
                     } else {
-                        Toast.makeText(getApplicationContext(), "This functionality needs Do Not Disturb permission to work", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "This functionality needs Do Not Disturb permission to work, Luke.", Toast.LENGTH_LONG).show();
                         silentPhn.setChecked(false);
                     }
                 }
             }
         });
 
-        services[5] = "no";
+        servicesReq[4] = false;
         lockScreen.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
                 if (!isChecked) {
-                    services[5] = "no";
-                    Toast.makeText(getApplicationContext(), "Lock Screen unselected", Toast.LENGTH_SHORT).show();
+                    servicesReq[4] = false;
                 } else {
-                    services[5] = "yes";
-                    Toast.makeText(getApplicationContext(), "Lock Screen selected", Toast.LENGTH_SHORT).show();
+                    if (isDeviceAdmin()) {
+                        servicesReq[4] = true;
+                        Toast.makeText(getApplicationContext(), "Locks screen after specified time, Luke.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        getDeviceAdminPermission();
+                        lockScreen.setChecked(false);
+                        Toast.makeText(getApplicationContext(), "This is a one time activity, Luke.", Toast.LENGTH_LONG).show();
+                    }
                 }
             }
         });
 
-        services[6] = "no";
+        servicesReq[5] = false;
         killMusic.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                if (!isChecked) {
-                    services[6] = "no";
-                    Toast.makeText(getApplicationContext(), "Kill Music unselected", Toast.LENGTH_SHORT).show();
-                } else {
-                    services[6] = "yes";
-                    Toast.makeText(getApplicationContext(), "Kill Music selected", Toast.LENGTH_SHORT).show();
-                }
+                if (!isChecked)
+                    servicesReq[5] = false;
+                else
+                    servicesReq[5] = true;
             }
         });
 
@@ -141,42 +149,55 @@ public class MainActivity extends AppCompatActivity {
                 Editable timerCount = timerText.getText();
                 if (validateTime(timerCount.toString())) {
                     int duration = Integer.parseInt(timerCount.toString());
-
                     UtilAlarmActivity am = new UtilAlarmActivity();
                     if (start) {
-                        am.setAlarm(getApplicationContext(), services, duration);
+                        am.setAlarm(getApplicationContext(), duration, servicesReq);
                         start = false;
                         startbutton.setText("STOP");
                         timerText.setEnabled(false);
-                        Toast.makeText(getApplicationContext(), "Timer Started", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "Timer Started, Luke.", Toast.LENGTH_SHORT).show();
                     } else {
+                        am.cancelAlarm(getApplicationContext());
                         start = true;
                         startbutton.setText("START");
-                        am.cancelAlarm(getApplicationContext());
                         timerText.setEnabled(true);
-                        Toast.makeText(getApplicationContext(), "Timer Cancelled", Toast.LENGTH_LONG).show();
+                        lockScreen.setChecked(false);
+                        silentPhn.setChecked(false);
+                        killsw.setChecked(false);
+                        bluetoothsw.setChecked(false);
+                        wifisw.setChecked(false);
+                        killMusic.setChecked(false);
+                        Toast.makeText(getApplicationContext(), "Timer Cancelled, Luke.", Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     timerText.setText("");
-                    Toast.makeText(getApplicationContext(), "Enter correct duration", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Just the numbers, Luke !!!", Toast.LENGTH_LONG).show();
                 }
 
             }
         });
+        final TextView about = (TextView) findViewById(R.id.about);
+        about.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String helpmsg="“Use the force, Luke.”";
+                Toast.makeText(getApplicationContext(), helpmsg, Toast.LENGTH_LONG).show();
+            }
+        });
+
+    }
+
+    private void openAppUsageSettings() {
+        Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+        startActivity(intent);
     }
 
 
     private boolean doNotDisturnSettingAccess() {
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                && !notificationManager.isNotificationPolicyAccessGranted()) {
-
-            Intent intent = new Intent(
-                    android.provider.Settings
-                            .ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
-
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !notificationManager.isNotificationPolicyAccessGranted()) {
+            Intent intent = new Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
             startActivity(intent);
             return notificationManager.isNotificationPolicyAccessGranted();
         } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
@@ -184,7 +205,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return true;
     }
-
 
     public boolean validateTime(String duration) {
         for (int i = 0; i < duration.length(); i++) {
@@ -194,7 +214,6 @@ public class MainActivity extends AppCompatActivity {
         }
         if (duration.length() == 0 || duration.length() > 3)
             return false;
-
         return true;
     }
 
@@ -220,6 +239,7 @@ public class MainActivity extends AppCompatActivity {
                             Switch lockScreen = (Switch) findViewById(R.id.screenLockSwitch);
                             EditText timerText = (EditText) findViewById(R.id.timerEditText);
                             Button startbutton1 = (Button) findViewById(R.id.startStopButton);
+                            final Switch killMusic = (Switch) findViewById(R.id.killMusicSwitch);
 
                             if (!isChecked) {
                                 lockScreen.setClickable(false);
@@ -232,11 +252,12 @@ public class MainActivity extends AppCompatActivity {
                                 bluetoothsw.setChecked(false);
                                 wifisw.setClickable(false);
                                 wifisw.setChecked(false);
+                                killMusic.setClickable(false);
+                                killMusic.setChecked(false);
                                 timerText.setEnabled(false);
                                 startbutton1.setEnabled(false);
 
                             } else {
-
                                 lockScreen.setClickable(true);
                                 silentPhn.setClickable(true);
                                 killsw.setClickable(true);
@@ -244,6 +265,7 @@ public class MainActivity extends AppCompatActivity {
                                 wifisw.setClickable(true);
                                 timerText.setEnabled(true);
                                 startbutton1.setEnabled(true);
+                                killMusic.setEnabled(true);
                             }
                         }
                     });
@@ -251,5 +273,45 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return true;
+    }
+
+    public boolean isDeviceAdmin() {
+        DevicePolicyManager deviceManger = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName compName = new ComponentName(this, MyAdmin.class);
+        return deviceManger.isAdminActive(compName);
+    }
+
+    public void getDeviceAdminPermission() {
+        ComponentName compName = new ComponentName(this, MyAdmin.class);
+        Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
+        intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, compName);
+        intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "In order to lock the screen it is necessary to make application device admin," +
+                " you can undo it in settings later if you want");
+        startActivityForResult(intent, RESULT_ENABLE);
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case RESULT_ENABLE:
+                if (resultCode == Activity.RESULT_OK) {
+                    Log.i("***", "Admin enabled!");
+                } else {
+                    Log.i("***", "Admin enable FAILED!");
+                }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    public boolean isAppusgae() {
+        try {
+            PackageManager packageManager = this.getPackageManager();
+            ApplicationInfo applicationInfo = packageManager.getApplicationInfo(this.getPackageName(), 0);
+            AppOpsManager appOpsManager = (AppOpsManager) this.getSystemService(Context.APP_OPS_SERVICE);
+            int mode = appOpsManager.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, applicationInfo.uid, applicationInfo.packageName);
+            return (mode == AppOpsManager.MODE_ALLOWED);
+
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
     }
 }

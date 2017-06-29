@@ -1,4 +1,12 @@
 <resources>
     <string name="app_name">Android Services Shutdown</string>
     <string name="start">START</string>
+    <string name="theboringapp_rishabhpandita">©theboringapp:rishabhpandita</string>
+    <string name="stop_music">Stop Music</string>
+    <string name="lock_screen">Lock Screen</string>
+    <string name="silent_phone">Silent Phone</string>
+    <string name="kill_all_task">Kill All Task</string>
+    <string name="bluetooth">Bluetooth</string>
+    <string name="wifi">WiFi</string>
+    <string name="timer">Timer</string>
 </resources>

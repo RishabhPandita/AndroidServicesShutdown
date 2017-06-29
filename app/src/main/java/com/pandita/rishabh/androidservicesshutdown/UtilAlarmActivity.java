@@ -5,8 +5,6 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.widget.Toast;
-
 import java.util.Calendar;
 
 /**
@@ -18,30 +16,33 @@ public class UtilAlarmActivity extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         Intent i = new Intent(context, ServiceHandler.class);
-        i.putExtra("wifi", intent.getStringExtra("wifi"));
-        i.putExtra("bluetooth", intent.getStringExtra("bluetooth"));
-        i.putExtra("taskkill", intent.getStringExtra("taskkill"));
-        i.putExtra("silentphn", intent.getStringExtra("silentphn"));
-        i.putExtra("lockscreen", intent.getStringExtra("lockscreen"));
-        i.putExtra("killmusic",intent.getStringExtra("killmusic"));
+
+        i.putExtra("wifiReq", intent.getExtras().getBoolean("wifiReq"));
+        i.putExtra("bluetoothReq", intent.getExtras().getBoolean("bluetoothReq"));
+        i.putExtra("taskKillReq", intent.getExtras().getBoolean("taskKillReq"));
+        i.putExtra("silentPhnReq", intent.getExtras().getBoolean("silentPhnReq"));
+        i.putExtra("lockScreenReq", intent.getExtras().getBoolean("lockScreenReq"));
+        i.putExtra("killMusicReq",intent.getExtras().getBoolean("killMusicReq"));
+
         context.startService(i);
 
     }
 
-    public void setAlarm(Context context, String[] services, int duration) {
+    public void setAlarm(Context context, int duration, boolean[] serviceReq) {
 
         Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.SECOND, duration);
+        cal.add(Calendar.MINUTE, duration);
 
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent i = new Intent(context, UtilAlarmActivity.class);
 
-        i.putExtra("wifi", services[0]);
-        i.putExtra("bluetooth", services[1]);
-        i.putExtra("taskkill", services[3]);
-        i.putExtra("silentphn", services[4]);
-        i.putExtra("lockscreen", services[5]);
-        i.putExtra("killmusic", services[6]);
+        i.putExtra("wifiReq", serviceReq[0]);
+        i.putExtra("bluetoothReq", serviceReq[1]);
+        i.putExtra("taskKillReq", serviceReq[2]);
+        i.putExtra("silentPhnReq", serviceReq[3]);
+        i.putExtra("lockScreenReq", serviceReq[4]);
+        i.putExtra("killMusicReq", serviceReq[5]);
+
         PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
         am.set(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), pi);
     }
